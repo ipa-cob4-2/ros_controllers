@@ -1,10 +1,10 @@
-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
  *  Copyright (c) 2008, Willow Garage, Inc.
  *  Copyright (c) 2012, hiDOF, Inc.
  *  Copyright (c) 2013, PAL Robotics, S.L.
+ *  Copyright (c) 2014, Fraunhofer IPA
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -35,65 +35,29 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef FORWARD_COMMAND_CONTROLLER_FORWARD_COMMAND_CONTROLLER_H
-#define FORWARD_COMMAND_CONTROLLER_FORWARD_COMMAND_CONTROLLER_H
+#ifndef VELOCITY_CONTROLLERS_JOINT_GROUP_VELOCITY_CONTROLLER_H
+#define VELOCITY_CONTROLLERS_JOINT_GROUP_VELOCITY_CONTROLLER_H
 
-#include <ros/node_handle.h>
-#include <hardware_interface/joint_command_interface.h>
-#include <controller_interface/controller.h>
-#include <std_msgs/Float64.h>
+#include <forward_command_controller/forward_joint_group_command_controller.h>
 
-
-namespace forward_command_controller
+namespace velocity_controllers
 {
 
 /**
- * \brief Single joint controller.
+ * \brief Forward command controller for a set of velocity controlled joints (linear or angular).
  *
- * This class passes the command signal down to the joint.
- * Command signal and joint hardware interface are of the same type, e.g. effort commands for an effort-controlled
- * joint.
- *
- * \tparam T Type implementing the JointCommandInterface.
+ * This class forwards the commanded velocities down to a set of joints.
  *
  * \section ROS interface
  *
- * \param type hardware interface type.
- * \param joint Name of the joint to control.
+ * \param type Must be "JointGroupVelocityController".
+ * \param joints List of names of the joints to control.
  *
  * Subscribes to:
- * - \b command (std_msgs::Float64) : The joint command to apply.
+ * - \b command (std_msgs::Float64MultiArray) : The joint velocities to apply
  */
-template <class T>
-class ForwardCommandController: public controller_interface::Controller<T>
-{
-public:
-  ForwardCommandController() : command_(0) {}
-  ~ForwardCommandController() {sub_command_.shutdown();}
-
-  bool init(T* hw, ros::NodeHandle &n)
-  {
-    std::string joint_name;
-    if (!n.getParam("joint", joint_name))
-    {
-      ROS_ERROR("No joint given (namespace: %s)", n.getNamespace().c_str());
-      return false;
-    }
-    joint_ = hw->getHandle(joint_name);
-    sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &ForwardCommandController::commandCB, this);
-    return true;
-  }
-
-  void starting(const ros::Time& time);
-  void update(const ros::Time& time, const ros::Duration& period) {joint_.setCommand(command_);}
-
-  hardware_interface::JointHandle joint_;
-  double command_;
-
-private:
-  ros::Subscriber sub_command_;
-  void commandCB(const std_msgs::Float64ConstPtr& msg) {command_ = msg->data;}
-};
+typedef forward_command_controller::ForwardJointGroupCommandController<hardware_interface::VelocityJointInterface>
+        JointGroupVelocityController;
 
 }
 
