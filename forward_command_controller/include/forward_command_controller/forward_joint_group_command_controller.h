@@ -99,6 +99,7 @@ public:
       }
     }
     
+    commands_.resize(n_joints_,0);
     sub_command_ = n.subscribe<std_msgs::Float64MultiArray>("command", 1, &ForwardJointGroupCommandController::commandCB, this);
     return true;
   }
